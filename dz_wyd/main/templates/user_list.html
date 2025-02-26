@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User List</title>
+</head>
+<body>
+    <h1>User List</h1>
+    <ul>
+        {% for user in users %}
+            <li>{{ user.name }} {{ user.surname }} - Favorite Number: {{ user.favorite_number }}</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'add_user' %}">Add New User</a>
+</body>
+</html>
