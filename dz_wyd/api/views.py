@@ -35,3 +35,50 @@ class UserListCreate(generics.ListCreateAPIView):
 class UserRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+from rest_framework.response import Response
+from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.renderers import JSONRenderer
+from rest_framework import status
+import requests
+from bs4 import BeautifulSoup
+
+from rest_framework.response import Response
+from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.renderers import JSONRenderer
+from rest_framework import status
+import requests
+from bs4 import BeautifulSoup
+
+
+@api_view(['GET'])
+@renderer_classes([JSONRenderer])
+def search_fact(request):
+    query = request.GET.get('query')
+    if not query:
+        return Response({"error": "Please provide a 'query' parameter."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Perform a search on DuckDuckGo
+        url = f"https://duckduckgo.com/html/?q={query}+answer+as+in+2025"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # Extract snippet (answer) from search results
+            snippets = soup.find_all('a', class_='result__snippet', limit=1)
+            if snippets:
+                answer = snippets[0].text.strip()
+                return Response({
+                    "query": query,
+                    "answer": answer
+                })
+            else:
+                return Response({"message": "No answer found for your query."}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({"error": "Failed to fetch search results."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
